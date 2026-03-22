@@ -36,7 +36,7 @@ export default function ModelBuilder({ onExpressionChange }) {
   useEffect(() => {
     const expr = buildExpression(terms)
     onExpressionChange(expr)
-  }, [terms])
+  }, [terms, onExpressionChange])
 
   const addTerm = () => {
     setTerms(prev => [...prev, { id: nextId, isConstant: false, coefficient: 1, var1: 'x1', exp1: 1, var2: 'none', exp2: 1 }])
@@ -144,11 +144,13 @@ export default function ModelBuilder({ onExpressionChange }) {
           fullWidth
           value={expression}
           onChange={e => {
+            // Direct edits bypass the term builder; clear terms to avoid desync
+            setTerms([])
             onExpressionChange(e.target.value)
           }}
           placeholder="ex: 23.38 + 9.59*x1 + 1.56*x1**2"
           size="small"
-          helperText="Edite diretamente ou use o construtor acima. Use ** para potências."
+          helperText="Edite diretamente (limpa o construtor) ou use o construtor acima. Use ** para potências."
         />
       </Box>
     </Box>
