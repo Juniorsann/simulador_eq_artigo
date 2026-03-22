@@ -51,7 +51,7 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
-      const cleanData = data.map(({ id, ...rest }) => rest)
+      const cleanData = data.map(({ id: _id, ...rest }) => rest)
       const result = await simulateData(expression, cleanData)
       setPredictions(result.predictions)
       setTab(2)

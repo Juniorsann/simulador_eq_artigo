@@ -1,12 +1,29 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Box, Typography, Button, Grid, Paper, Stack } from '@mui/material'
-import Plot from 'react-plotly.js'
+import Plotly from 'plotly.js/dist/plotly'
 import DownloadIcon from '@mui/icons-material/Download'
+
+/** Custom Plotly wrapper using useEffect to avoid react-plotly.js ESM issues */
+function PlotWrapper({ data, layout, config, style }) {
+  const divRef = useRef(null)
+
+  useEffect(() => {
+    const container = divRef.current
+    if (!container) return
+    Plotly.react(container, data, { ...layout, autosize: true }, { responsive: true, ...config })
+    return () => {
+      Plotly.purge(container)
+    }
+  })
+
+  return <div ref={divRef} style={{ width: '100%', ...style }} />
+}
 
 function downloadCSV(data, predictions) {
   if (!data || !predictions) return
-  const headers = [...Object.keys(data[0]), 'Y_pred']
-  const rows = data.map((row, i) => [...Object.values(row), predictions[i]])
+  const variables = Object.keys(data[0]).filter(k => k !== 'id')
+  const headers = [...variables, 'Y_pred']
+  const rows = data.map((row, i) => [...variables.map(v => row[v]), predictions[i]])
   const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
   const blob = new Blob([csvContent], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)
@@ -33,9 +50,9 @@ export default function Charts({ data, predictions }) {
   const scatterPlots = variables.map(varName => {
     const xValues = data.map(row => parseFloat(row[varName]) || 0)
     return (
-      <Grid item xs={12} md={6} key={varName}>
+      <Grid size={{ xs: 12, md: 6 }} key={varName}>
         <Paper variant="outlined" sx={{ p: 1 }}>
-          <Plot
+          <PlotWrapper
             data={[{
               x: xValues,
               y: predictions,
@@ -51,8 +68,6 @@ export default function Charts({ data, predictions }) {
               margin: { t: 40, r: 20, b: 50, l: 60 },
               height: 300,
             }}
-            style={{ width: '100%' }}
-            config={{ responsive: true }}
           />
         </Paper>
       </Grid>
@@ -65,9 +80,9 @@ export default function Charts({ data, predictions }) {
     const x1Vals = data.map(r => parseFloat(r['x1']) || 0)
     const x2Vals = data.map(r => parseFloat(r['x2']) || 0)
     surface3D = (
-      <Grid item xs={12}>
+      <Grid size={12}>
         <Paper variant="outlined" sx={{ p: 1 }}>
-          <Plot
+          <PlotWrapper
             data={[{
               x: x1Vals,
               y: x2Vals,
@@ -87,8 +102,6 @@ export default function Charts({ data, predictions }) {
               margin: { t: 50, r: 20, b: 20, l: 20 },
               height: 450,
             }}
-            style={{ width: '100%' }}
-            config={{ responsive: true }}
           />
         </Paper>
       </Grid>
@@ -97,9 +110,9 @@ export default function Charts({ data, predictions }) {
 
   // Boxplot
   const boxplot = (
-    <Grid item xs={12} md={6}>
+    <Grid size={{ xs: 12, md: 6 }}>
       <Paper variant="outlined" sx={{ p: 1 }}>
-        <Plot
+        <PlotWrapper
           data={[{
             y: predictions,
             type: 'box',
@@ -115,8 +128,6 @@ export default function Charts({ data, predictions }) {
             margin: { t: 40, r: 20, b: 40, l: 60 },
             height: 300,
           }}
-          style={{ width: '100%' }}
-          config={{ responsive: true }}
         />
       </Paper>
     </Grid>
@@ -150,7 +161,7 @@ export default function Charts({ data, predictions }) {
           { label: 'Máx', value: max.toFixed(4) },
           { label: 'Desvio Padrão', value: std.toFixed(4) },
         ].map(stat => (
-          <Grid item xs={6} sm={4} md={2} key={stat.label}>
+          <Grid size={{ xs: 6, sm: 4, md: 2 }} key={stat.label}>
             <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
               <Typography variant="h6" color="primary">{stat.value}</Typography>
               <Typography variant="caption" color="text.secondary">{stat.label}</Typography>

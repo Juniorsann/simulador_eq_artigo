@@ -62,8 +62,10 @@ def simulate(request: SimulationRequest):
         raise HTTPException(status_code=422, detail=f"Error evaluating model: {str(e)}")
 
 
-# Serve React frontend if build exists
+# Serve React frontend if build exists (Docker: ./frontend_build, local dev: ../frontend_build)
 frontend_build_dir = os.path.join(os.path.dirname(__file__), "frontend_build")
+if not os.path.exists(frontend_build_dir):
+    frontend_build_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend_build"))
 if os.path.exists(frontend_build_dir):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_build_dir, "assets")), name="assets")
 
